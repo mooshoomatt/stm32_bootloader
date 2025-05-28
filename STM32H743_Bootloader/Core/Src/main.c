@@ -31,13 +31,15 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define MAJOR 0						// Major version number
+#define MINOR 2						// Minor version number
 
+#define OTA_REQUEST_TIMEOUT 3000	// 3000ms timeout
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define MAJOR 0		// Major version number
-#define MINOR 1		// Minor version number
+
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -93,10 +95,44 @@ int main(void)
   MX_GPIO_Init();
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
+
   printf("Starting Bootloader (v%d.%d)\n", BL_VERSION[0], BL_VERSION[1]);
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);
-  HAL_Delay(3000);
+
+  GPIO_PinState OTA_Pin_State;
+  uint32_t timeout_tick = HAL_GetTick() + OTA_REQUEST_TIMEOUT;
+
+  // OTA Button must be pressed within 3s to enter serial download mode
+  while(1)
+  {
+	  // Read OTA Pin state and timer
+	  OTA_Pin_State = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13);
+	  uint32_t current_tick = HAL_GetTick();
+
+	  if ((OTA_Pin_State != GPIO_PIN_RESET) || (current_tick > timeout_tick))
+	  {
+		  break;
+	  }
+  }
+
+  // Enter serial download
+  if (OTA_Pin_State != GPIO_PIN_RESET)
+  {
+	  printf("OTA Serial Download Mode\n");
+	  if (-1 != 0 )
+	  {
+		  printf("OTA UPDATE FAILED - HALTING\n");
+		  while(1);
+	  }
+	  else
+	  {
+		  printf("OTA UPDATE SUCCESS\nINVOKING SYSTEM RESET\n");
+		  HAL_NVIC_SystemReset();
+	  }
+  }
+
   jump_to_app();
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -220,11 +256,18 @@ static void MX_GPIO_Init(void)
 /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : PC13 */
+  GPIO_InitStruct.Pin = GPIO_PIN_13;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PB0 */
   GPIO_InitStruct.Pin = GPIO_PIN_0;

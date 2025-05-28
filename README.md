@@ -13,8 +13,40 @@ It seems to me that only entire sectors can be erased/written at a time, so mayb
 ## High Level Summary
 1. Initialize clocks
 2. Initialize peripherals we want in the bootloader 
-3. Read application vector table
-4. Jump to application 
+3. Check for OTA request from user (or later, from the application)
+    - If there is an OTA request, receive update, flash, and reset 
+4. Read application vector table
+5. Jump to application 
+
+## Implementation details
+The clock and peripheral initialization is pretty much taken care of by the code generation tools, so not much to do there.\
+One small thing that is nice is to override the printf function and send it to our virtual COM port. This little piece of code takes care of that:
+```
+/*
+ * @brief 	Print the characters to UART (printf).
+ * 			With GCC, small printf (options LD Linker->Libraries->Small printf
+ * 			set to 'Yes') calls __io_putchar()
+ *
+ * @retval int
+ */
+#ifdef __GNUC__
+int __io_putchar(int ch)
+#else
+int fputc(int ch, FILE *F)
+#endif /* __GNUC__ */
+{
+	/* Place your implementation of __io_putchar/fputc here */
+	HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+	return ch;
+}
+```
+To check for an OTA update request, we just read the state of a GPIO pin (in this case, the user button on PC13). If an update is received, we call the OTA update routine.\
+EmbeTronicX uses something called ETX OTA protocol for this, which requires using a separate UART for bidirectional communication + handshaking. Personally, I am more used to being able to use the same debug serial interface to send the firmware update (typically transmitting HEX or SREC), so I am going to try and implement that instead. TBD on how that goes.\
+
+We can make the STM32CubeIDE automatically generate a HEX file for our binary by adding the following command to Project > Properties > C/C++ Build > Settings > Build steps > Post-build steps > Command:
+```
+arm-none-eabi-objcopy -O ihex ${ProjName}.elf ${ProjName}.hex
+```
 
 # Application
 In this case we don't really care what this is. The app as it currently exists just blinks the yellow LED on my NUCLEO-H743ZI2 at 2Hz.\

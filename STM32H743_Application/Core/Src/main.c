@@ -31,8 +31,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define MAJOR 0
-#define MINOR 1
+#define MAJOR 0		// Major version number
+#define MINOR 2		// Minor version number
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
