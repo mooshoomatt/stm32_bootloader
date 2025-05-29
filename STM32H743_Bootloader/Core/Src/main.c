@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include "uart_hex_loader.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -119,7 +120,8 @@ int main(void)
   if (OTA_Pin_State != GPIO_PIN_RESET)
   {
 	  printf("OTA Serial Download Mode\n");
-	  if (-1 != 0 )
+
+	  if (uart_hex_ota_download() != UART_HEX_OTA_STATUS_OK)
 	  {
 		  printf("OTA UPDATE FAILED - HALTING\n");
 		  while(1);
