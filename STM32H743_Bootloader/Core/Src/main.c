@@ -22,7 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
-#include "uart_hex_loader.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -119,9 +119,11 @@ int main(void)
   // Enter serial download
   if (OTA_Pin_State != GPIO_PIN_RESET)
   {
-	  printf("OTA Serial Download Mode\n");
+	  printf("OTA Xmodem Download Mode - Ready for Transfer\n");
 
-	  if (uart_hex_ota_download() != UART_HEX_OTA_STATUS_OK)
+	  xmodem_receive_ota();
+
+	  if (1)
 	  {
 		  printf("OTA UPDATE FAILED - HALTING\n");
 		  while(1);
