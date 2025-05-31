@@ -24,10 +24,11 @@
 
 #define X_MAX_ERRORS ((uint8_t)10u)
 
-#define X_PACKET_SIZE     ((uint8_t)132u)
-#define X_PACKET_NUM_SIZE ((uint8_t)2u)
-#define X_PACKET_128_SIZE ((uint16_t)128u)
-#define X_PACKET_CRC_SIZE ((uint16_t)2u)
+#define X_PACKET_SIZE     		((uint8_t)132u)
+#define X_HEADER_SIZE     		((uint8_t)1u)
+#define X_PACKET_NUM_SIZE 		((uint8_t)2u)
+#define X_DATA_SIZE 			((uint16_t)128u)
+#define X_CHECKSUM_SIZE 		((uint16_t)1u)
 
 #define X_SOH ((uint8_t)0x01u)
 #define X_EOT ((uint8_t)0x04u)

@@ -40,13 +40,20 @@ int fputc(int ch, FILE *F)
 	return ch;
 }
 ```
-To check for an OTA update request, we just read the state of a GPIO pin (in this case, the user button on PC13). If an update is received, we call the OTA update routine.\
-EmbeTronicX uses something called ETX OTA protocol for this, which requires using a separate UART for bidirectional communication + handshaking. Personally, I am more used to being able to use the same debug serial interface to send the firmware update (typically transmitting HEX or SREC), so I am going to try and implement that instead. TBD on how that goes.\
-
+To check for an OTA update request, we just read the state of a GPIO pin (in this case, the user button on PC13). If an update is received, we call the OTA update routine.
+<br/> <br/>
+EmbeTronicX uses something called ETX OTA protocol for this, which requires using a separate UART for bidirectional communication + handshaking.\
+Personally, I am more used to being able to use the same debug serial interface to send the firmware update (typically transmitting HEX or SREC), so I am going to try and implement that instead.\
 We can make the STM32CubeIDE automatically generate a HEX file for our binary by adding the following command to Project > Properties > C/C++ Build > Settings > Build steps > Post-build steps > Command:
 ```
 arm-none-eabi-objcopy -O ihex ${ProjName}.elf ${ProjName}.hex
 ```
+*Update:* Sending a HEX or SREC file over serial with no handshaking has some serious drawbacks, the largest being that you need to be able to deal with the all of the data as it comes (there is no pausing). I was able to code up a super basic parser, but it can only handle the data if the rate is super low. I think it can be done, but I am too stupid to figure it out in a reasonable amount of time.
+<br/> <br/>
+Some cursory research seems to suggest that the Xmodem/Ymodem/Zmodem protocols might be more what I am looking for. Xmodem specifically seems simple enough to implement from scratch, and has rudimentary handshaking so it removed the asynchronous problem. Let's see how that goes!\
+*Update:* I was able to work off of some examples online that implement the XMODEM protocol for OTA firmware updates. I have what is basically working code, except that my particular MCU (STM32F743) requires flash writes to be aligned to 256-bit words. I need to adjust my implementation to accomodate this.
+
+
 
 # Application
 In this case we don't really care what this is. The app as it currently exists just blinks the yellow LED on my NUCLEO-H743ZI2 at 2Hz.\

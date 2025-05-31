@@ -15,6 +15,7 @@ typedef enum
 
 UART_Status uart_receive(uint8_t *pData, uint16_t length);
 UART_Status uart_transmit(uint8_t *pData, uint16_t length);
+UART_Status uart_transmit_str(uint8_t *pData);
 UART_Status uart_transmit_ch(uint8_t data);
 
 #endif /* UART_H_ */
