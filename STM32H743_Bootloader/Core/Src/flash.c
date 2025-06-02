@@ -1,5 +1,16 @@
 #include "flash.h"
 
+/**
+ * Function: flash_erase
+ * ---------------------
+ * Erases sector(s) of flash
+ *
+ * start_sector: 	first sector to erase
+ * end_sector: 		last sector to erase
+ *
+ * returns: 	flash status enum
+ *
+ */
 Flash_Status flash_erase(uint32_t start_sector, uint32_t end_sector)
 {
 	Flash_Status status = FLASH_OK;
@@ -65,8 +76,14 @@ Flash_Status flash_write(uint32_t address, uint32_t *pData, uint32_t length)
 		}
 	}
 
-	// Read data back 32 bits at a time
-	// TODO
+	// Verify write
+	for (uint32_t i = 0; i < length*8; i++)
+	{
+		if (*(uint32_t*)(address + i*4) != pData[i])
+		{
+			status |= FLASH_ERROR_CHECK;
+		}
+	}
 
 	if (HAL_FLASH_Lock() != HAL_OK)
 	{
