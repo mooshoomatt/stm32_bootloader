@@ -33,7 +33,7 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define MAJOR 0						// Major version number
-#define MINOR 2						// Minor version number
+#define MINOR 8						// Minor version number
 
 #define OTA_REQUEST_TIMEOUT 3000	// 3000ms timeout
 /* USER CODE END PD */
@@ -119,20 +119,8 @@ int main(void)
   // Enter serial download
   if (OTA_Pin_State != GPIO_PIN_RESET)
   {
-	  printf("OTA Xmodem Download Mode - Ready for Transfer\n");
-
+	  printf("OTA XMODEM Download Mode - Ready for Transfer\n");
 	  xmodem_receive_ota();
-
-	  if (1)
-	  {
-		  printf("OTA UPDATE FAILED - HALTING\n");
-		  while(1);
-	  }
-	  else
-	  {
-		  printf("OTA UPDATE SUCCESS\nINVOKING SYSTEM RESET\n");
-		  HAL_NVIC_SystemReset();
-	  }
   }
 
   jump_to_app();
@@ -141,9 +129,10 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  printf("You shouldn't be here :)\n");
   while (1)
   {
-    /* USER CODE END WHILE */
+	/* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
@@ -307,13 +296,14 @@ int fputc(int ch, FILE *F)
 static void jump_to_app(void)
 {
 	printf("Reading Application Vector Table\n");
-	void (*app_reset_handler) (void) = (void*) (*(volatile uint32_t *) (0x08040000 + 4));
-
-	// Manually set the stack pointer based on the vector table
-	//__set_MSP(*(volatile uint32_t *) 0x08040000 );
+	void (*app_reset_handler) (void) = (void*) (*(volatile uint32_t *) (APP_START_ADDRESS + 4));
 
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
 	printf("Jumping to application at %p\n", app_reset_handler);
+
+	// De-initialize HAL and set the stack pointer based on the app vector table
+	// HAL_DeInit();
+	// __set_MSP(*(volatile uint32_t *) APP_START_ADDRESS );
 	app_reset_handler();
 }
 

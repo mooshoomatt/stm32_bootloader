@@ -52,6 +52,9 @@ default.size.stdout \
 OBJDUMP_LIST += \
 STM32H743_Application.list \
 
+OBJCOPY_BIN += \
+STM32H743_Application.bin \
+
 
 # All Target
 all: main-build
@@ -75,12 +78,17 @@ STM32H743_Application.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL
 	@echo 'Finished building: $@'
 	@echo ' '
 
+STM32H743_Application.bin: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objcopy  -O binary $(EXECUTABLES) "STM32H743_Application.bin"
+	@echo 'Finished building: $@'
+	@echo ' '
+
 # Other Targets
 clean:
-	-$(RM) STM32H743_Application.elf STM32H743_Application.list STM32H743_Application.map default.size.stdout
+	-$(RM) STM32H743_Application.bin STM32H743_Application.elf STM32H743_Application.list STM32H743_Application.map default.size.stdout
 	-@echo ' '
 
-secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
+secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST) $(OBJCOPY_BIN)
 
 fail-specified-linker-script-missing:
 	@echo 'Error: Cannot find the specified linker script. Check the linker settings in the build configuration.'

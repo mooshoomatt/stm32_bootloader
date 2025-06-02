@@ -11,8 +11,11 @@
 #ifndef XMODEM_OTA_H_
 #define XMODEM_OTA_H_
 
+#include <stdio.h>
+#include <string.h>
 #include "uart.h"
 #include "flash.h"
+
 
 /* Xmodem (128 bytes) packet format
  * Byte  0:       Header

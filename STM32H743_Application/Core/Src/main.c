@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -92,6 +93,7 @@ int main(void)
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
   printf("Starting Application (v%d.%d)\n", APP_VERSION[0], APP_VERSION[1]);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */

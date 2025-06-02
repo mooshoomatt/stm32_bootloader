@@ -9,13 +9,10 @@ static uint8_t  packet_num_buf[X_PACKET_NUM_SIZE]   = {0};
 static uint8_t  data_buf[X_DATA_SIZE]	 			= {0};
 static uint8_t  checksum_buf[X_CHECKSUM_SIZE]       = {0};
 
+void xmodem_receive_ota();
 static XMODEM_Status xmodem_handle_packet();
 static XMODEM_Status xmodem_handle_error(uint8_t *error_count);
 static uint8_t xmodem_calc_checksum(uint8_t *pData, uint16_t length);
-
-//static uint16_t xmodem_calc_crc(uint8_t *pData, uint16_t length);
-//static XMODEM_Status xmodem_handle_packet(uint8_t size);
-//static XMODEM_Status xmodem_error_handler(uint8_t *error_number, uint8_t max_error_number);
 
 void xmodem_receive_ota(void)
 {
@@ -62,7 +59,7 @@ void xmodem_receive_ota(void)
 					uart_transmit_ch(X_ACK);
 				}
 				// If flash error, then abort immediately
-				else if ((packet_status & X_ERROR_FLASH) != 0)
+				else if (packet_status == X_ERROR_FLASH)
 				{
 					error_count = X_MAX_ERRORS;
 					status = xmodem_handle_error(&error_count);
@@ -76,10 +73,9 @@ void xmodem_receive_ota(void)
 			case X_EOT:
 				// End of transfer
 				uart_transmit_ch(X_ACK);
-				uart_transmit_str((uint8_t*)"Firmware Update Complete!\n");
-				uart_transmit_str((uint8_t*)"Halting!\n");
-				while(1);
-				break;
+				printf("%d Packets Processed\n", xm_packet_number-1);
+				printf("Firmware Update Complete!\n");
+				return;
 			case X_CAN:
 				// Cancel transfer
 				status = X_ERROR;
@@ -95,32 +91,11 @@ void xmodem_receive_ota(void)
 	}
 }
 
-static XMODEM_Status xmodem_handle_error(uint8_t *error_count)
-{
-	XMODEM_Status status = X_OK;
-	// Increment error counter
-	(*error_count)++;
-	// Check if we have hit the max error count
-	if (*error_count >= X_MAX_ERRORS)
-	{
-		// Abort transfer
-		uart_transmit_ch(X_CAN);
-		HAL_Delay(10); // Is this delay needed?
-		uart_transmit_ch(X_CAN);
-		status = X_ERROR;
-	}
-	// Otherwise send a NAK for repeat
-	else
-	{
-		uart_transmit_ch(X_NAK);
-	}
-	return status;
-}
-
 static XMODEM_Status xmodem_handle_packet()
 {
 	XMODEM_Status status = X_OK;
 	UART_Status comm_status = UART_OK;
+	Flash_Status flash_status = FLASH_OK;
 
 	// Read packet contents into buffers
 	comm_status |= uart_receive(packet_num_buf, X_PACKET_NUM_SIZE);
@@ -136,7 +111,8 @@ static XMODEM_Status xmodem_handle_packet()
 	// If we haven't yet, erase the flash
 	if ((status == X_OK) && (xm_flash_erased == 0))
 	{
-		if (flash_erase() == FLASH_OK)
+		flash_status = flash_erase(APP_START_SECTOR, APP_END_SECTOR);
+		if (flash_status == FLASH_OK)
 		{
 			xm_flash_erased = 1;
 		}
@@ -168,10 +144,13 @@ static XMODEM_Status xmodem_handle_packet()
 	// If things look good, proceed to flash
 	if (status == X_OK)
 	{
-		if (flash_write(xm_current_address, (uint32_t*)data_buf, X_DATA_SIZE) == FLASH_OK)
+		// 128 bytes = 1024 bits = 4 flash words
+		flash_status = flash_write(xm_current_address, (uint32_t*)data_buf, 4);
+
+		if (flash_status == FLASH_OK)
 		{
 			xm_packet_number++;
-			xm_current_address += (X_DATA_SIZE / 4);
+			xm_current_address += X_DATA_SIZE;
 		}
 		else
 		{
@@ -179,6 +158,28 @@ static XMODEM_Status xmodem_handle_packet()
 		}
 	}
 
+	return status;
+}
+
+static XMODEM_Status xmodem_handle_error(uint8_t *error_count)
+{
+	XMODEM_Status status = X_OK;
+	// Increment error counter
+	(*error_count)++;
+	// Check if we have hit the max error count
+	if (*error_count >= X_MAX_ERRORS)
+	{
+		// Abort transfer
+		uart_transmit_ch(X_CAN);
+		HAL_Delay(10); // Is this delay needed?
+		uart_transmit_ch(X_CAN);
+		status = X_ERROR;
+	}
+	// Otherwise send a NAK for repeat
+	else
+	{
+		uart_transmit_ch(X_NAK);
+	}
 	return status;
 }
 
